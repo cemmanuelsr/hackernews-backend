@@ -11,26 +11,13 @@ export const Link = objectType({
   },
 });
 
-let links: NexusGenObjects["Link"][] = [
-  {
-    id: 1,
-    url: "www.howtographql.com",
-    description: "Fullstack tutorial for GraphQL",
-  },
-  {
-    id: 2,
-    url: "graphql.org",
-    description: "GraphQL official website",
-  },
-];
-
 export const LinkQuery = extendType({
   type: "Query",
   definition(t) {
     t.nonNull.list.nonNull.field("feed", {
       type: "Link",
       resolve(parent, args, context, info) {
-        return links;
+        return context.prisma.link.findMany();
       },
     });
   },
@@ -45,41 +32,34 @@ export const LinkMutation = extendType({
         description: nonNull(stringArg()),
         url: nonNull(stringArg()),
       },
-
       resolve(parent, args, context) {
         const { description, url } = args;
 
-        let idCount = links.length + 1;
-        const link = {
-          id: idCount,
-          description: description,
-          url: url,
-        };
-        links.push(link);
-        return link;
-      }
+        const newLink = context.prisma.link.create({
+          data: {
+            description: description,
+            url: url,
+          },
+        });
+
+        return newLink;
+      },
     });
     t.nonNull.field("delete", {
       type: "Link",
       args: {
         id: nonNull(idArg()),
       },
-
       resolve(parent, args, context) {
         const { id } = args;
-        const deleted_link = links.filter((link) => {
-          if (link.id === parseInt(id)) {
-            return link;
-          };
-        })[0];
-        links = links.filter((link) => {
-          if (link.id !== parseInt(id)) {
-            return link;
-          };
+        const deletedLink = context.prisma.link.delete({
+          where: {
+            id: parseInt(id),
+          },
         });
 
-        return deleted_link;
-      }
+        return deletedLink;
+      },
     });
     t.nonNull.field("update", {
       type: "Link",
@@ -88,23 +68,28 @@ export const LinkMutation = extendType({
         description: stringArg(),
         url: stringArg(),
       },
-
       resolve(parent, args, context) {
         const { id, description, url } = args;
-
-        for (let i = 0; i < links.length; i++) {
-          const link = links[i];
-          if (link.id === parseInt(id)) {
-            if (description != null) {
-              link.description = description;
-            };
-            if (url != null) {
-              link.url = url;
-            };
-
-            return link;
-          };
+        type Data = {
+          url?: string;
+          description?: string;
         };
+        const data: Data = {};
+        if (description != null) {
+          data.description = description
+        };
+        if (url != null) {
+          data.url = url
+        };
+
+        const updatedLink = context.prisma.link.update({
+          where: {
+            id: parseInt(id),
+          },
+          data: data,
+        });
+
+        return updatedLink;
       },
     });
   },
