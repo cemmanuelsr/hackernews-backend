@@ -1,7 +1,10 @@
 {
   "name": "hackernews-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend graphql for hackernews",
+  "engines": {
+    "node": "16.x"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
